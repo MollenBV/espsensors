@@ -3,17 +3,17 @@
 #include <ArduinoJson.h>
 
 // Sensor and LED configuration
-#define LIGHT_SENSOR_PIN  34  // ESP32 pin GPIO25 connected to light sensor
-#define FORCE_SENSOR_PIN  35  // ESP32 pin GPIO13 connected to force sensor
-#define LED_PIN           32  // ESP32 pin GPIO33 connected to LED
-#define ANALOG_THRESHOLD  500
-#define FORCE_THRESHOLD   500 // Threshold for force detection
-#define TIMEOUT           5000 // 5 seconds in milliseconds
+#define LIGHT_SENSOR_PIN 34 // ESP32 pin GPIO25 connected to light sensor
+#define FORCE_SENSOR_PIN 35 // ESP32 pin GPIO13 connected to force sensor
+#define LED_PIN 32          // ESP32 pin GPIO33 connected to LED
+#define ANALOG_THRESHOLD 500
+#define FORCE_THRESHOLD 500 // Threshold for force detection
+#define TIMEOUT 5000        // 5 seconds in milliseconds
 
 // Mesh network configuration
-#define MESH_PREFIX     "ESPMESH"
-#define MESH_PASSWORD   "test1234"
-#define MESH_PORT       5555
+#define MESH_PREFIX "ESPMESH"
+#define MESH_PASSWORD "test1234"
+#define MESH_PORT 5555
 
 bool isDark = false;
 unsigned long forceBelowThresholdTime = 0;
@@ -24,7 +24,8 @@ uint32_t rootnodeID = 2223841881; // root node ID
 
 void sendData(bool forceStatus);
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
   pinMode(LED_PIN, OUTPUT);
   pinMode(FORCE_SENSOR_PIN, INPUT);
@@ -36,7 +37,8 @@ void setup() {
   mesh.setRoot(false);
 }
 
-void loop() {
+void loop()
+{
   int lightValue = analogRead(LIGHT_SENSOR_PIN);
   int forceValue = analogRead(FORCE_SENSOR_PIN);
   bool forceStatus = forceValue >= FORCE_THRESHOLD;
@@ -45,13 +47,19 @@ void loop() {
   isDark = lightValue < ANALOG_THRESHOLD;
 
   // Handle LED and force sensor logic
-  if (forceValue < FORCE_THRESHOLD) {
-    if (forceBelowThresholdTime == 0) {
+  if (forceValue < FORCE_THRESHOLD)
+  {
+    if (forceBelowThresholdTime == 0)
+    {
       forceBelowThresholdTime = millis();
-    } else if (millis() - forceBelowThresholdTime >= TIMEOUT) {
+    }
+    else if (millis() - forceBelowThresholdTime >= TIMEOUT)
+    {
       digitalWrite(LED_PIN, LOW);
     }
-  } else {
+  }
+  else
+  {
     forceBelowThresholdTime = 0;
     digitalWrite(LED_PIN, isDark ? HIGH : LOW);
   }
@@ -68,13 +76,13 @@ void loop() {
   mesh.update();
 }
 
-void sendData(bool forceStatus) {
+void sendData(bool forceStatus)
+{
   DynamicJsonDocument doc(1024);
-  doc["Sensor"] = "druksensor"; // Set sensor name as specified
-  doc["Status"] = forceStatus ? "AAN" : "UIT"; // "AAN" if above threshold, otherwise "UIT"
+  doc["Sensor"] = "druksensor";                // Set sensor name as specified
+  doc["Status"] = forceStatus ? "AAN" : "UIT"; // "AAN" if above threshold, otherwise "UIT" (AAN means on and UIT means off)
 
   String message;
   serializeJson(doc, message);
   mesh.sendSingle(rootnodeID, message); // Send the status message over the mesh network
 }
-
